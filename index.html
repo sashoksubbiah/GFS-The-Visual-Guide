@@ -126,7 +126,6 @@
         <h1 class="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gfsCyan to-gfsPurple mb-4">
             The Google File System
         </h1>
-        
     </header>
 
     <!-- INTERACTIVE OPERATIONS LAB -->
@@ -136,7 +135,6 @@
         <div class="flex flex-col md:flex-row items-center justify-between mb-4 bg-gfsCard p-4 rounded-t-xl border-b border-gray-700">
             <div class="flex items-center gap-4 mb-4 md:mb-0">
                 <i class="fa-solid fa-flask text-gfsCyan text-xl"></i>
-                <h2 class="text-xl font-bold text-white">Operations Lab</h2>
                 <div class="h-6 w-px bg-gray-600 mx-2"></div>
                 <!-- Scenario Tabs -->
                 <div class="flex bg-gray-900 rounded-lg p-1">
@@ -326,32 +324,32 @@
                 view: 'cluster',
                 steps: [
                     { 
-                        text: "App calls Read(fileName, offset). Client calculates Chunk Index.", 
+                        text: "APP: calls Read('/home/user/log.txt', offset: 10MB). Client calculates Chunk Index: 0.", 
                         highlightNode: ['client'], 
                         resetPaths: true 
                     },
                     { 
-                        text: "Client sends (FileName, ChunkIndex) to Master.", 
+                        text: "REQ: Client sends ('/home/user/log.txt', 0) to Master [10.0.0.1].", 
                         highlightNode: ['client', 'master'], 
                         packet: {from: 'client', to: 'master', color: '#a855f7'} 
                     },
                     { 
-                        text: "Master replies with (ChunkHandle, Replica Locations).", 
+                        text: "META: Master returns Handle '8af2' & Replicas [192.168.1.10, 192.168.1.11, 192.168.1.12].", 
                         highlightNode: ['master', 'client'], 
                         packet: {from: 'master', to: 'client', color: '#a855f7'} 
                     },
                     { 
-                        text: "Client caches metadata. Sends Request(ChunkHandle, Range) to closest Replica.", 
+                        text: "REQ: Client caches meta. Requests Handle '8af2' from closest Replica (CS2).", 
                         highlightNode: ['client', 'cs2'], 
                         packet: {from: 'client', to: 'cs2', color: '#06b6d4'} 
                     },
                     { 
-                        text: "Replica reads data from disk (Linux FS) and streams to Client.", 
+                        text: "DATA: CS2 reads disk block at offset 10MB and streams 64KB packet to Client.", 
                         highlightNode: ['cs2', 'client'], 
                         packet: {from: 'cs2', to: 'client', color: '#06b6d4'} 
                     },
                     { 
-                        text: "Read Complete. Data available to App.", 
+                        text: "DONE: 64KB data delivered to App buffer.", 
                         highlightNode: ['client'], 
                         complete: true 
                     }
@@ -361,47 +359,47 @@
                 view: 'pipeline',
                 steps: [
                     { 
-                        text: "Client asks Master: 'Who holds the lease for Chunk X?'", 
+                        text: "META: Client asks Master: 'Who is Primary for Chunk 3c9b?'", 
                         highlightNode: ['client', 'master'], 
                         packet: {from: 'client', to: 'master', color: '#a855f7'} 
                     },
                     { 
-                        text: "Master replies: 'Replica A is Primary. B and C are Secondaries.'", 
+                        text: "REPLY: Master says: 'Replica A [10.2.1.1] is Primary. Secondaries: B, C.'", 
                         highlightNode: ['master', 'client'], 
                         packet: {from: 'master', to: 'client', color: '#a855f7'} 
                     },
                     { 
-                        text: "DATA FLOW: Client pushes data to closest Replica (B) first. Pipelining begins.", 
+                        text: "DATA PUSH: Client pushes 'PAYLOAD_XYZ' to closest Replica (B). Saved in LRU Buffer.", 
                         highlightNode: ['client', 'repB'], 
                         packet: {from: 'client', to: 'repB', color: '#06b6d4'} 
                     },
                     { 
-                        text: "DATA FLOW: Replica B forwards to Primary A (Daisy Chain).", 
+                        text: "CHAIN: Replica B forwards 'PAYLOAD_XYZ' to Primary A.", 
                         highlightNode: ['repB', 'primary'], 
                         packet: {from: 'repB', to: 'primary', color: '#06b6d4'} 
                     },
                     { 
-                        text: "DATA FLOW: Primary A forwards to Replica C. All replicas now buffer the data.", 
+                        text: "CHAIN: Primary A forwards 'PAYLOAD_XYZ' to Replica C. All buffers full.", 
                         highlightNode: ['primary', 'repC'], 
                         packet: {from: 'primary', to: 'repC', color: '#06b6d4'} 
                     },
                     { 
-                        text: "CONTROL FLOW: Client sends 'Write Request' to Primary. 'Commit this data!'", 
+                        text: "CONTROL: Client sends 'Write Request' to Primary. 'Commit PAYLOAD_XYZ!'", 
                         highlightNode: ['client', 'primary'], 
                         packet: {from: 'client', to: 'primary', color: '#a855f7', dashed: true} 
                     },
                     { 
-                        text: "Primary assigns Serial # and tells Secondaries: 'Write at Serial #K'.", 
+                        text: "ORDER: Primary assigns Serial #551. Tells B & C: 'Write at #551'.", 
                         highlightNode: ['primary', 'repB', 'repC'], 
                         packet: {from: 'primary', to: ['repB', 'repC'], color: '#a855f7', dashed: true} 
                     },
                     { 
-                        text: "Secondaries apply write and Ack to Primary.", 
+                        text: "ACK: Secondaries write to disk and Ack success to Primary.", 
                         highlightNode: ['repB', 'repC', 'primary'], 
                         packet: {from: ['repB', 'repC'], to: 'primary', color: '#a855f7', dashed: true} 
                     },
                     { 
-                        text: "Primary Acks to Client. Write Defined & Consistent.", 
+                        text: "SUCCESS: Primary replies to Client. Data is Consistent & Defined.", 
                         highlightNode: ['primary', 'client'], 
                         packet: {from: 'primary', to: 'client', color: '#a855f7', dashed: true} 
                     }
@@ -411,32 +409,32 @@
                 view: 'pipeline',
                 steps: [
                      { 
-                        text: "Atomic Append: Client pushes data to all replicas (Daisy Chain complete).", 
+                        text: "SETUP: Client pushes 'LOG_ENTRY_101' to all replicas (Daisy Chain complete).", 
                         highlightNode: ['client', 'repB', 'primary', 'repC'], 
                         resetPaths: true
                     },
                     { 
-                        text: "Client sends 'Record Append' to Primary.", 
+                        text: "REQ: Client sends 'Record Append' to Primary.", 
                         highlightNode: ['client', 'primary'], 
                         packet: {from: 'client', to: 'primary', color: '#a855f7', dashed: true} 
                     },
                     { 
-                        text: "LOGIC: Primary checks if chunk is full. If yes, pad. If no, append.", 
+                        text: "LOGIC: Primary checks chunk 3c9b size. 63MB used. 1MB fits? Yes.", 
                         highlightNode: ['primary'], 
                         special: "Checking Size..."
                     },
                     { 
-                        text: "Primary picks offset. Writes locally. Forwards offset to Secondaries.", 
+                        text: "COMMIT: Primary picks Offset 63MB. Writes locally. Sends Offset 63MB to B & C.", 
                         highlightNode: ['primary', 'repB', 'repC'], 
                         packet: {from: 'primary', to: ['repB', 'repC'], color: '#a855f7', dashed: true} 
                     },
                     { 
-                        text: "Secondaries write at exact same offset. Ack to Primary.", 
+                        text: "WRITE: Secondaries write 'LOG_ENTRY_101' at Offset 63MB. Ack to Primary.", 
                         highlightNode: ['repB', 'repC', 'primary'], 
                         packet: {from: ['repB', 'repC'], to: 'primary', color: '#a855f7', dashed: true} 
                     },
                     { 
-                        text: "Success. Record guaranteed at least once.", 
+                        text: "SUCCESS: Primary tells Client 'Append Successful at Offset 63MB'.", 
                         highlightNode: ['primary', 'client'], 
                         packet: {from: 'primary', to: 'client', color: '#a855f7', dashed: true} 
                     }
@@ -628,4 +626,3 @@
     </script>
 </body>
 </html>
-
